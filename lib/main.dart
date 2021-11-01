@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Kino Driburg'),
+      home: MyHomePage(title: 'Kino Driburg Programm'),
     );
   }
 }
@@ -29,7 +29,9 @@ class MyApp extends StatelessWidget {
 // vars
 late WebViewController controllerGlobal;
 const String programURL =
-    "https://www.kinoheld.de/kino-bad-driburg/kino-bad-driburg/shows?mode=widget&layout=movies&rb=1&hideTitle=1&floatingCart=1";
+    "https://www.kinoheld.de/kino-bad-driburg/kino-bad-driburg/shows/movies?mode=widget&layout=movies&rb=1&hideTitle=1&floatingCart=1";
+//const String programURL = "https://www.kinoheld.de/kino-bad-driburg/kino-bad-driburg/shows?mode=widget&layout=movies&rb=1&hideTitle=1&floatingCart=1";
+
 bool isLoading = false;
 
 Future<bool> _handleBack(context) async {
@@ -51,6 +53,14 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+void _launchURL(String url) async {
+  if (url.startsWith("tel:0")) {
+    url = url.replaceFirst("0", "+49");
+  }
+  await launch(url);
+  //await canLaunch(url) ? await launch(url) : throw 'Could not launch';
+}
+
 class _MyHomePageState extends State<MyHomePage> {
   final Completer<WebViewController> _controller =
       Completer<WebViewController>();
@@ -65,12 +75,10 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  void _launchURL(String url) async {
-    if (url.startsWith("tel:0")) {
-      url = url.replaceFirst("0", "+49");
+  void _loadProgram() async {
+    if (await controllerGlobal.currentUrl() != programURL) {
+      controllerGlobal.loadUrl(programURL);
     }
-    await launch(url);
-    //await canLaunch(url) ? await launch(url) : throw 'Could not launch';
   }
 
   @override
@@ -82,11 +90,21 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Scaffold(
                 appBar: AppBar(
                   title: _loadingProgress != 100
-                      ? Text(widget.title +
-                          " (" +
-                          _loadingProgress.toString() +
-                          "%)")
-                      : Text(widget.title),
+                      ? InkWell(
+                          onTap: () {
+                            _loadProgram();
+                          },
+                          child: Text(widget.title +
+                              " (" +
+                              _loadingProgress.toString() +
+                              "%)"),
+                        )
+                      : InkWell(
+                          onTap: () {
+                            _loadProgram();
+                          },
+                          child: Text(widget.title),
+                        ),
                   actions: <Widget>[
                     SampleMenu(_controller.future),
                   ],
@@ -104,7 +122,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                       navigationDelegate: (NavigationRequest request) {
                         if (request.url.startsWith('tel:') ||
-                            request.url.startsWith("mailto:")) {
+                            request.url.startsWith("mailto:") ||
+                            request.url
+                                .startsWith("https://www.instagram.com/") ||
+                            request.url
+                                .startsWith("https://www.facebook.com/")) {
                           _launchURL(request.url);
                           return NavigationDecision.prevent;
                         }
@@ -171,27 +193,27 @@ class SampleMenu extends StatelessWidget {
           itemBuilder: (BuildContext context) => <PopupMenuItem<MenuOptions>>[
             PopupMenuItem<MenuOptions>(
               value: MenuOptions.programm,
-              child: Text('Programm'),
+              child: const Text('Programm'),
               enabled: controller.hasData,
             ),
             PopupMenuItem<MenuOptions>(
               value: MenuOptions.mainPage,
-              child: Text('Startseite'),
+              child: const Text('Startseite'),
               enabled: controller.hasData,
             ),
             PopupMenuItem<MenuOptions>(
                 value: MenuOptions.quiz,
-                child: Text('Quiz'),
+                child: const Text('Quiz'),
                 enabled: controller.hasData),
             PopupMenuItem<MenuOptions>(
                 value: MenuOptions.prices,
-                child: Text('Preise'),
+                child: const Text('Preise'),
                 enabled: controller.hasData
                 //&& controller.data!.currentUrl().toString() != programURL
                 ),
             const PopupMenuItem<MenuOptions>(
               value: MenuOptions.showDev,
-              child: const Text('Entwickler'),
+              child: Text('Entwickler'),
             )
           ],
         );
@@ -200,10 +222,19 @@ class SampleMenu extends StatelessWidget {
   }
 
   void _onShowDev(BuildContext context) async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text("Phil Roggenbuck ;)"),
-      duration: Duration(seconds: 6),
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: const Text("Phil Roggenbuck"),
+      duration: const Duration(seconds: 6),
       backgroundColor: Colors.green,
+      behavior: SnackBarBehavior.floating,
+      action: SnackBarAction(
+        label: 'Click',
+        onPressed: () {
+          _launchURL("https://github.com/phrogg");
+        },
+        textColor: Colors.white,
+        disabledTextColor: Colors.grey,
+      ),
     ));
   }
 
