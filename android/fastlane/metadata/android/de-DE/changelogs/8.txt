@@ -1,0 +1,3 @@
+Ladekreisel hinzugefügt (damit man auch bei langserem Internet sieht das etwas passiert...)
+Kompatibilität zu neueren Android Versionen hergestellt
+E-Mail Schaltfrächen sind nun "anklickbar"
