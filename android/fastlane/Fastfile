@@ -88,23 +88,19 @@ platform :android do
 
     ensure_git_status_clean
 
+    # get and increment build number
     newVer = _BuildNumber(increment: true)
 
+    # get and create changelog
     changelog = _GenerateChangelog()
 
     # commit files
     git_commit(path: "../pubspec.yaml", message: "[AUTO] Version Bump to " + newVer.to_s)
     git_commit(path: "./fastlane/*", message: "[AUTO] Fastlane Bump",allow_nothing_to_commit: true)
+
     # and push them to git
     push_to_git_remote(
       remote: "origin",
-      #local_branch: "develop",  # optional, aliased by "branch", default is set to current branch
-      #remote_branch: "develop", # optional, default is set to local_branch
-      #force: true,    # optional, default: false
-      #force_with_lease: true,   # optional, default: false
-      #tags: false,    # optional, default: true
-      #no_verify: true,# optional, default: false
-      #set_upstream: true        # optional, default: false
     )
 
     add_git_tag(
@@ -119,14 +115,13 @@ platform :android do
       api_token: ENV["GITOKEN"],
       name: options[:vn],
       tag_name: "v"+newVer.to_s,
-      #description: (File.read("changelog") rescue "No changelog provided"),
       description: changelog
     )
 
-    flutterBuild(vn: options[:vn]) #TODO: reactivate
+    flutterBuild(vn: options[:vn])
 
     upload_to_play_store(
-       track: 'internal',
+       track: 'production',
        #version_code: flutter_version()["version_code"],
        apk: '../build/app/outputs/flutter-apk/app-release.apk'
      )
