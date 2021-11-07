@@ -21,17 +21,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Kino Driburg Programm'),
+      home: const MyHomePage(title: 'Kino Driburg Programm'),
     );
   }
 }
 
-// vars
+// define global variables
 late WebViewController controllerGlobal;
 const String programURL =
     "https://www.kinoheld.de/kino-bad-driburg/kino-bad-driburg/shows/movies?mode=widget&layout=movies&rb=1&hideTitle=1&floatingCart=1";
-//const String programURL = "https://www.kinoheld.de/kino-bad-driburg/kino-bad-driburg/shows?mode=widget&layout=movies&rb=1&hideTitle=1&floatingCart=1";
-
 bool isLoading = false;
 
 Future<bool> _handleBack(context) async {
@@ -113,12 +111,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   Builder(builder: (BuildContext context) {
                     return WebView(
                       initialUrl: programURL,
-                      //'https://booking.cinetixx.de/frontend/index.html?cinemaId=2177080606&showId=2461668192&bgswitch=false&resize=false#/program/2177080606',
                       javascriptMode: JavascriptMode.unrestricted,
                       onWebViewCreated: (WebViewController webViewController) {
                         _controller.complete(webViewController);
                         controllerGlobal = webViewController;
-                        //webViewController.evaluateJavascript("alert(1)");
                       },
                       navigationDelegate: (NavigationRequest request) {
                         if (request.url.startsWith('tel:') ||
@@ -151,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                   }),
                   isLoading
-                      ? Center(child: CircularProgressIndicator())
+                      ? const Center(child: CircularProgressIndicator())
                       : Container(),
                 ]))));
   }
