@@ -21,28 +21,114 @@ platform :android do
     gradle(task: "test")
   end
 
-  desc "Submit a new Beta"
-  lane :beta do
-    #increment_build_number
-    #sh "cd ../ && flutter build apk --build-name FluttrVer --release"
-      Dir.chdir "../.." do sh("flutter", "build", "apk", "--release", "--build-name", "FluttrVer") end # Call Flutter Build
-      #gradle(task: 'bundle', build_type: 'Release')
-      upload_to_play_store(
-        track: 'beta',
-        #version_code: flutter_version()["version_code"],
-        apk: '../build/app/outputs/flutter-apk/app-release.apk',
-        skip_upload_screenshots: true,
-        skip_upload_images: true
-      )
-  
-    # sh "your_script.sh"
-    # You can also use other beta testing services here
+  lane :flutterBuild do |options|
+    Dir.chdir "../.." do sh("flutter", "build", "apk", "--release", "--build-name", options[:vn]) end # Call Flutter Build
   end
 
+  desc "Submit a new beta build"
+  lane :beta do
+    #_BuildNumber() #TODO: add test version here
+    # auslagern in neue funktion
+    #flutterBuild() #TODO: fix this
+    upload_to_play_store(
+      track: 'beta',
+      #version_code: flutter_version()["version_code"],
+      apk: '../build/app/outputs/flutter-apk/app-release.apk',
+      skip_upload_screenshots: true,
+      skip_upload_images: true,
+      skip_upload_changelogs: true,
+      skip_upload_metadata: true
+    )
+  end
+
+  # fix this function
+  lane :_BuildNumber do |options|
+    path = '../../pubspec.yaml'
+    re = /version: .*\+(\d+)/
+    s = File.read(path)
+    versionCode = s[re, 1].to_i
+
+    if options[:increment]
+      versionCode += 1
+      s[re, 1] = (versionCode).to_s
+      f = File.new(path, 'w')
+      f.write(s)
+      f.close
+    end
+    
+    versionCode
+  end
+
+  # fix this function
+  lane :_GenerateChangelog do |options|
+    changeLog = changelog_from_git_commits(
+      #pretty: "- (%ae) %s",# Optional, lets you provide a custom format to apply to each commit when generating the changelog text
+      #date_format: "short",# Optional, lets you provide an additional date format to dates within the pretty-formatted string
+      match_lightweight_tag: false,  # Optional, lets you ignore lightweight (non-annotated) tags when searching for the last tag
+      merge_commit_filtering: "exclude_merges" # Optional, lets you filter out merge commits
+    )
+
+    path = '/metadata/android/de-DE/changelogs/'+_BuildNumber().to_s + '.txt'
+    f = File.new("." + path, 'w')
+    f.write(changeLog)
+    f.close
+
+    git_add(path: "./fastlane"+path)
+
+    UI.success "Changelog successful generated!"
+    changeLog
+  end
 
   desc "Deploy a new version to the Google Play"
-  lane :deploy do
-    gradle(task: "clean assembleRelease")
-    upload_to_play_store
+  lane :deploy do |options|
+    if !options[:vn]
+      UI.error 'No VersionName specified!'
+      next
+    end
+
+    ensure_git_status_clean
+
+    newVer = _BuildNumber(increment: true)
+
+    changelog = _GenerateChangelog()
+
+    # commit files
+    git_commit(path: "../pubspec.yaml", message: "[AUTO] Version Bump to " + newVer.to_s)
+    git_commit(path: "./fastlane/*", message: "[AUTO] Fastlane Bump",allow_nothing_to_commit: true)
+    # and push them to git
+    push_to_git_remote(
+      remote: "origin",
+      #local_branch: "develop",  # optional, aliased by "branch", default is set to current branch
+      #remote_branch: "develop", # optional, default is set to local_branch
+      #force: true,    # optional, default: false
+      #force_with_lease: true,   # optional, default: false
+      #tags: false,    # optional, default: true
+      #no_verify: true,# optional, default: false
+      #set_upstream: true        # optional, default: false
+    )
+
+    add_git_tag(
+      grouping: "fastlane-builds",
+      includes_lane: false,
+      prefix: "v",
+      build_number: newVer
+    )
+
+    github_release = set_github_release(
+      repository_name: ENV["GITUSER"]+"/"+ENV["GITREPO"],
+      api_token: ENV["GITOKEN"],
+      name: options[:vn],
+      tag_name: "v"+newVer.to_s,
+      #description: (File.read("changelog") rescue "No changelog provided"),
+      description: changelog
+    )
+
+    #flutterBuild(vn: options[:vn]) #TODO: reactivate
+
+    #upload_to_play_store(
+    #    track: 'internal',
+    #    #version_code: flutter_version()["version_code"],
+    #    apk: '../build/app/outputs/flutter-apk/app-release.apk'
+    #  )
   end
 end

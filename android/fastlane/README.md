@@ -21,11 +21,26 @@ or alternatively using `brew install fastlane`
 fastlane android test
 ```
 Runs all the tests
+### android flutterBuild
+```
+fastlane android flutterBuild
+```
+
 ### android beta
 ```
 fastlane android beta
 ```
-Submit a new Beta
+Submit a new beta build
+### android _BuildNumber
+```
+fastlane android _BuildNumber
+```
+
+### android _GenerateChangelog
+```
+fastlane android _GenerateChangelog
+```
+
 ### android deploy
 ```
 fastlane android deploy
