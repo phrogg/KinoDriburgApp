@@ -228,7 +228,7 @@ class SampleMenu extends StatelessWidget {
       backgroundColor: Colors.green,
       behavior: SnackBarBehavior.floating,
       action: SnackBarAction(
-        label: 'Click',
+        label: 'Github',
         onPressed: () {
           _launchURL("https://github.com/phrogg");
         },
