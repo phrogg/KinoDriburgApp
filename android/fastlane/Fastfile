@@ -97,8 +97,6 @@ platform :android do
       next
     end
 
-    flutterBuild(vn: options[:vn])
-
     ensure_git_status_clean
 
     # get and increment build number
@@ -110,6 +108,9 @@ platform :android do
     # commit files
     git_commit(path: "../pubspec.yaml", message: "[AUTO] Version Bump to " + newVer.to_s)
     git_commit(path: "./fastlane/*", message: "[AUTO] Fastlane Bump",allow_nothing_to_commit: true)
+
+    # build the app
+    flutterBuild(vn: options[:vn])
 
     # and push them to git
     push_to_git_remote(
