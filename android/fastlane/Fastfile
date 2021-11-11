@@ -59,7 +59,18 @@ platform :android do
     versionCode
   end
 
-  # fix this function
+  # get the name for the repo
+  lane :_GetRepoName do |options|
+    path = '../../.git/config'
+    re = /version: .*\+(\d+)/
+    re = /.*url = .*github\.com\/(.*)\.git/
+    s = File.read(path)
+    
+    s[re, 1].to_s
+  end
+
+  # TODO: extend this function to use old changelog or standard text if no text generated
+  desc "Generates a changelog from the last commit messages"
   lane :_GenerateChangelog do |options|
     changeLog = changelog_from_git_commits(
       #pretty: "- (%ae) %s",# Optional, lets you provide a custom format to apply to each commit when generating the changelog text
@@ -86,6 +97,8 @@ platform :android do
       next
     end
 
+    flutterBuild(vn: options[:vn])
+
     ensure_git_status_clean
 
     # get and increment build number
@@ -111,14 +124,13 @@ platform :android do
     )
 
     github_release = set_github_release(
-      repository_name: ENV["GITUSER"]+"/"+ENV["GITREPO"],
+      repository_name: _GetRepoName(),
       api_token: ENV["GITOKEN"],
       name: options[:vn],
       tag_name: "v"+newVer.to_s,
-      description: changelog
+      description: changelog,
+      upload_assets: ['../build/app/outputs/flutter-apk/app-release.apk']
     )
-
-    flutterBuild(vn: options[:vn])
 
     upload_to_play_store(
        track: 'production',
