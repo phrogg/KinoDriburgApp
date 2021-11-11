@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -63,7 +64,10 @@ class _MyHomePageState extends State<MyHomePage> {
   final Completer<WebViewController> _controller =
       Completer<WebViewController>();
 
+  // define private variables
   int _loadingProgress = 0;
+  final _storage = const FlutterSecureStorage();
+  String _cookieList = "";
 
   @override
   initState() {
@@ -76,6 +80,20 @@ class _MyHomePageState extends State<MyHomePage> {
   void _loadProgram() async {
     if (await controllerGlobal.currentUrl() != programURL) {
       controllerGlobal.loadUrl(programURL);
+    }
+  }
+
+  void _loadCookies() async {
+    if (await _storage.read(key: "cookieList") != null) {
+      _cookieList = _storage.read(key: "cookieList").toString();
+
+      controllerGlobal.evaluateJavascript("document.cookie = " + _cookieList);
+    }
+  }
+
+  void _saveCookies() async {
+    if (_cookieList.isNotEmpty) {
+      await _storage.write(key: "cookieList", value: _cookieList);
     }
   }
 
@@ -115,6 +133,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       onWebViewCreated: (WebViewController webViewController) {
                         _controller.complete(webViewController);
                         controllerGlobal = webViewController;
+                        _loadCookies();
+                        //controllerGlobal.evaluateJavascript(
+                        //    "var now = new Date();now.setTime(now.getTime() + (120 * 60 * 1000));document.cookie = \"KHCONSENT=deny; expires=\" + now.toUTCString() + \"; domain=www.kinoheld.de; path=/\";");
                       },
                       navigationDelegate: (NavigationRequest request) {
                         if (request.url.startsWith('tel:') ||
@@ -137,11 +158,14 @@ class _MyHomePageState extends State<MyHomePage> {
                         setState(() {
                           isLoading = true;
                         });
+                        _saveCookies();
                       },
                       onPageFinished: (String url) {
                         setState(() {
                           isLoading = false;
                         });
+                        // controllerGlobal.evaluateJavascript(
+                        //     "document.getElementsByClassName(\"nav-drawer absolute\")[0].remove();document.getElementsByClassName(\"bottom-center _brlbs-block-content\").remove();");
                       },
                       gestureNavigationEnabled: true,
                     );

@@ -36,11 +36,16 @@ Submit a new beta build
 fastlane android _BuildNumber
 ```
 
+### android _GetRepoName
+```
+fastlane android _GetRepoName
+```
+
 ### android _GenerateChangelog
 ```
 fastlane android _GenerateChangelog
 ```
-
+Generates a changelog from the last commit messages
 ### android deploy
 ```
 fastlane android deploy
