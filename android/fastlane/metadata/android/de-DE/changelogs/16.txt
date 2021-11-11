@@ -1,0 +1,15 @@
+Updated fastlane builded app before increment of version number xD
+fixed #9
+- added the secure storage module
+- embedded functions to save and load the cookies into the webview
+- updated fastlane to be more dynamic (removed two hardcoded lines from the env file.)
+- removed some comments from the fastlane file added a description
+added the secure storage module
+added the secure storage module
+Update README.md
+Update README.md
+Update README.md
+Update README.md
+Update README.md
+Update README.md
+Update README.md
